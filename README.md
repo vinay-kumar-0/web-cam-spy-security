@@ -19,3 +19,13 @@ important instructions:
 About project.
 - This is the project which i am currently doing as a part of internship.
 - this has various features like checking webcam status, logs etc.. it also has the feature for toggling the webcam on and off.
+
+------------------------------- To run the project ---------------------------------------
+step1: clone this repository.
+step2: install the required modules along with python.
+step3: enter the command 
+        python interface.py
+      enter this at the path where file resides.
+step4: to enable or disable the camera there asks a password.
+step5: enter the default password admin.
+step6: you are good to go now.
