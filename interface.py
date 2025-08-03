@@ -5,6 +5,7 @@ from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 import subprocess
 import hashlib
+import winreg
 
 # Functions for button actions
 def project_info():
