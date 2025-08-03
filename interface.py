@@ -102,14 +102,47 @@ def change_password():
     cp_popup.grab_set()
 
 def disable_camera():
-    if prompt_password():  # Ask for password first
-        log_action("Webcam disabled")
-        messagebox.showinfo("Camera", "Webcam has been disabled.")
+    if prompt_password():
+        try:
+            key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS) as webcam_key:
+                i = 0
+                while True:
+                    try:
+                        app_key_name = winreg.EnumKey(webcam_key, i)
+                        with winreg.OpenKey(webcam_key, app_key_name, 0, winreg.KEY_ALL_ACCESS) as app_key:
+                            winreg.SetValueEx(app_key, "Value", 0, winreg.REG_SZ, "Deny")
+                        i += 1
+                    except OSError:
+                        break
+            log_action("Webcam access DENIED via registry")
+            messagebox.showinfo("Camera Access", "Webcam access has been denied for all apps.")
+        except PermissionError:
+            messagebox.showerror("Permission Error", "Run this script as Administrator to modify registry.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update registry.\n{e}")
 
 def enable_camera():
-    if prompt_password():  # Ask for password first
-        log_action("Webcam enabled")
-        messagebox.showinfo("Camera", "Webcam has been enabled.")
+    if prompt_password():
+        try:
+            key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS) as webcam_key:
+                i = 0
+                while True:
+                    try:
+                        app_key_name = winreg.EnumKey(webcam_key, i)
+                        with winreg.OpenKey(webcam_key, app_key_name, 0, winreg.KEY_ALL_ACCESS) as app_key:
+                            winreg.SetValueEx(app_key, "Value", 0, winreg.REG_SZ, "Allow")
+                        i += 1
+                    except OSError:
+                        break
+            log_action("Webcam access ALLOWED via registry")
+            messagebox.showinfo("Camera Access", "Webcam access has been allowed for all apps.")
+        except PermissionError:
+            messagebox.showerror("Permission Error", "Run this script as Administrator to modify registry.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update registry.\n{e}")
+
 
 # GUI Setup
 root = tk.Tk()
