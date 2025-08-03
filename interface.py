@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 import subprocess
 import hashlib
 import winreg
-
+root = tk.Tk()
 # Functions for button actions
 def project_info():
     html_path=os.path.abspath("info.html")
@@ -102,6 +102,8 @@ def change_password():
     tk.Button(cp_popup, text="Update", command=update).pack(pady=10)
     cp_popup.grab_set()
 
+
+
 def disable_camera():
     if prompt_password():
         try:
@@ -144,12 +146,131 @@ def enable_camera():
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update registry.\n{e}")
 
+class ToggleSwitch(tk.Canvas):
+    def __init__(self, parent, command, **kwargs):
+        super().__init__(parent, width=60, height=30, bg=parent['bg'], highlightthickness=0, **kwargs)
+        self.command = command
+        self.theme = "light"
+
+        # Background oval
+        self.bg_rect = self.create_oval(5, 5, 55, 25, fill="#ccc", outline="#ccc")
+        # Movable circle
+        self.indicator = self.create_oval(30, 5, 50, 25, fill="#00BFFF", outline="")
+
+        self.bind("<Button-1>", self.toggle)
+
+    def toggle(self, event=None):
+        if self.theme == "light":
+            self.theme = "dark"
+            self.itemconfig(self.indicator, fill="#444")
+            self.coords(self.indicator, 10, 5, 30, 25)
+        else:
+            self.theme = "light"
+            self.itemconfig(self.indicator, fill="#00BFFF")
+            self.coords(self.indicator, 30, 5, 50, 25)
+        
+        self.command(self.theme)
+
+
+
+themes = {
+    "light": {
+        "bg": "#F6F5F5",
+        "fg": "black",
+        "btn_bg": "white",
+        "btn_fg": "black"
+    },
+    "dark": {
+        "bg": "#2E2E2E",
+        "fg": "#F6F5F5",
+        "btn_bg": "#4E4E4E",
+        "btn_fg": "black"
+    }
+}
+
+def apply_theme(theme_name):
+    theme = themes[theme_name]
+    root.configure(bg=theme["bg"])
+    for widget in root.winfo_children():
+        if isinstance(widget, tk.Label):
+            widget.configure(bg=theme["bg"], fg=theme["fg"])
+        elif isinstance(widget, tk.Frame):
+            widget.configure(bg=theme["bg"])
+        elif isinstance(widget, ttk.Button):
+            style.configure("Rounded.TButton",
+                            foreground=theme["btn_fg"],
+                            background=theme["btn_bg"])
+
+def on_theme_change(new_theme):
+    apply_theme(new_theme)
+
+class ToggleSwitch(tk.Canvas):
+    def __init__(self, parent, command, **kwargs):
+        super().__init__(parent, width=60, height=30, bg=parent['bg'], highlightthickness=0, **kwargs)
+        self.command = command
+        self.theme = "light"
+        self.bg_rect = self.create_oval(5, 5, 55, 25, fill="#ccc", outline="#ccc")
+        self.indicator = self.create_oval(30, 5, 50, 25, fill="#00BFFF", outline="")
+        self.bind("<Button-1>", self.toggle)
+
+    def toggle(self, event=None):
+        if self.theme == "light":
+            self.theme = "dark"
+            self.itemconfig(self.indicator, fill="#444")
+            self.coords(self.indicator, 10, 5, 30, 25)
+        else:
+            self.theme = "light"
+            self.itemconfig(self.indicator, fill="#00BFFF")
+            self.coords(self.indicator, 30, 5, 50, 25)
+        self.command(self.theme)
+
+
+def get_webcam_status():
+    try:
+        result = subprocess.check_output(
+            'wmic path Win32_PnPEntity where "Name like \'%Camera%\'" get Status',
+            shell=True
+        ).decode()
+        status_lines = [line.strip() for line in result.splitlines() if line.strip()]
+        status = status_lines[-1] if len(status_lines) > 1 else "Unknown"
+        return status
+    except:
+        return "Error"
+
+
+def update_status_label():
+    status = get_webcam_status()
+    color = {
+        "OK": "green",
+        "Degraded": "orange",
+        "Unknown": "gray",
+        "Error": "red"
+    }.get(status, "gray")
+
+    status_label.config(text=f"Webcam Status: {status}", fg=color)
+    root.after(5000, update_status_label)  # Update every 5 seconds
+
+
+
+
 
 # GUI Setup
-root = tk.Tk()
+
 root.title("Web Cam Security")
 root.geometry("500x650")
 root.configure(bg="#F6F5F5")
+
+#status indidcator
+status_label = tk.Label(root, text="Webcam Status: Checking...", bg="#F6F5F5", fg="black", font=("Arial", 10, "bold"))
+status_label.place(x=10, y=15)  # Adjust position as needed
+
+#theme toggle switch
+toggle = ToggleSwitch(root, command=on_theme_change)
+toggle.place(x=440, y=10)  # adjust coordinates based on your layout
+
+
+# themes
+
 
 # Define style for rounded buttons using ttk
 style = ttk.Style()
@@ -161,6 +282,10 @@ style.configure("Rounded.TButton",
                 borderwidth=2)
 style.map("Rounded.TButton",
           background=[("active", "#cc0000")])
+
+
+#theme toggle button
+
 
 # Title Button - Project Info
 ttk.Button(root, text="Project Info", style="Rounded.TButton", command=project_info).pack(pady=10)
@@ -191,7 +316,7 @@ ttk.Button(root, text="Change Password", style="Rounded.TButton", command=change
 frame2 = tk.Frame(root, bg="gray", padx=20, pady=20)
 frame2.pack(pady=20)
 
-ttk.Button(frame2, text="Disable Camera", style="Rounded.TButton", command=disable_camera).pack(pady=10)
+ttk.Button(frame2, text="Disable Camera", style+="Rounded.TButton", command=disable_camera).pack(pady=10)
 ttk.Button(frame2, text="Enable Camera", style="Rounded.TButton", command=enable_camera).pack(pady=10)
-
+update_status_label()
 root.mainloop()
