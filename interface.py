@@ -316,7 +316,7 @@ ttk.Button(root, text="Change Password", style="Rounded.TButton", command=change
 frame2 = tk.Frame(root, bg="gray", padx=20, pady=20)
 frame2.pack(pady=20)
 
-ttk.Button(frame2, text="Disable Camera", style+="Rounded.TButton", command=disable_camera).pack(pady=10)
+ttk.Button(frame2, text="Disable Camera", style="Rounded.TButton", command=disable_camera).pack(pady=10)
 ttk.Button(frame2, text="Enable Camera", style="Rounded.TButton", command=enable_camera).pack(pady=10)
 update_status_label()
 root.mainloop()
