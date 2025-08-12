@@ -6,7 +6,44 @@ from PIL import Image, ImageTk
 import subprocess
 import hashlib
 import winreg
+from tkinter import simpledialog, messagebox
+import smtplib
+from email.mime.text import MIMEText
+
 root = tk.Tk()
+
+#fn def to send mails
+
+def send_email(receiver_email, logs):
+    sender_email = "sender_email"
+    sender_password = "sender_app_passwd"
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 465
+
+    msg = MIMEText(logs)
+    msg["Subject"] = "📋 Webcam Logs"
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+
+    try:
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+        messagebox.showinfo("Success", "Logs sent successfully!")
+    except Exception as e:
+        messagebox.showerror("Email Error", f"Failed to send logs.\n{e}")
+
+def share_logs():
+    receiver_email = simpledialog.askstring("Share Logs", "Enter receiver's email:")
+    if receiver_email:
+        try:
+            with open("webcam_logs.txt", "r") as log_file:
+                logs = log_file.read()
+            send_email(receiver_email, logs)
+        except FileNotFoundError:
+            messagebox.showerror("Log Error", "Log file not found.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not read logs.\n{e}")
 # Functions for button actions
 def project_info():
     html_path=os.path.abspath("info.html")
@@ -49,6 +86,8 @@ def check_status():
         messagebox.showinfo("Status", "Webcam status: Unknown (registry key not found)")
     except Exception as e:
         messagebox.showerror("Status Error", f"Unable to retrieve webcam status.\n{e}")
+
+
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -333,5 +372,7 @@ frame2.pack(pady=20)
 
 ttk.Button(frame2, text="Disable Camera", style="Rounded.TButton", command=disable_camera).pack(pady=10)
 ttk.Button(frame2, text="Enable Camera", style="Rounded.TButton", command=enable_camera).pack(pady=10)
+share_logs_button = ttk.Button(root, text="Share Logs", command=share_logs)
+share_logs_button.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-10)  # Bottom-right with padding
 update_status_label()
 root.mainloop()
