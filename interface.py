@@ -32,19 +32,23 @@ def log_action(action):
 
 def check_status():
     try:
-        result = subprocess.check_output(
-            'wmic path Win32_PnPEntity where "Name like \'%Camera%\'" get Status',
-            shell=True
-        ).decode()
-        
-        # Extract and clean the status
-        status_lines = [line.strip() for line in result.splitlines() if line.strip()]
-        status = status_lines[-1] if len(status_lines) > 1 else "Unknown"
+        key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"
+        webcam_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+        value, _ = winreg.QueryValueEx(webcam_key, "Value")
+        winreg.CloseKey(webcam_key)
+
+        if value == "Deny":
+            status = "Disabled"
+        elif value == "Allow":
+            status = "Enabled"
+        else:
+            status = "Unknown"
 
         messagebox.showinfo("Status", f"Webcam status: {status}")
+    except FileNotFoundError:
+        messagebox.showinfo("Status", "Webcam status: Unknown (registry key not found)")
     except Exception as e:
         messagebox.showerror("Status Error", f"Unable to retrieve webcam status.\n{e}")
-
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -108,18 +112,25 @@ def disable_camera():
     if prompt_password():
         try:
             key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS) as webcam_key:
-                i = 0
-                while True:
-                    try:
-                        app_key_name = winreg.EnumKey(webcam_key, i)
-                        with winreg.OpenKey(webcam_key, app_key_name, 0, winreg.KEY_ALL_ACCESS) as app_key:
-                            winreg.SetValueEx(app_key, "Value", 0, winreg.REG_SZ, "Deny")
-                        i += 1
-                    except OSError:
-                        break
-            log_action("Webcam access DENIED via registry")
-            messagebox.showinfo("Camera Access", "Webcam access has been denied for all apps.")
+            try:
+                webcam_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+            except FileNotFoundError:
+                webcam_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+
+            winreg.SetValueEx(webcam_key, "Value", 0, winreg.REG_SZ, "Deny")
+            winreg.CloseKey(webcam_key)
+
+            # Confirm the change
+            webcam_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+            value, _ = winreg.QueryValueEx(webcam_key, "Value")
+            winreg.CloseKey(webcam_key)
+
+            if value == "Deny":
+                log_action("Webcam access DENIED via registry")
+                messagebox.showinfo("Camera Access", "Webcam access has been denied.")
+            else:
+                messagebox.showwarning("Camera Access", "Failed to confirm registry change.")
+
         except PermissionError:
             messagebox.showerror("Permission Error", "Run this script as Administrator to modify registry.")
         except Exception as e:
@@ -129,23 +140,29 @@ def enable_camera():
     if prompt_password():
         try:
             key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS) as webcam_key:
-                i = 0
-                while True:
-                    try:
-                        app_key_name = winreg.EnumKey(webcam_key, i)
-                        with winreg.OpenKey(webcam_key, app_key_name, 0, winreg.KEY_ALL_ACCESS) as app_key:
-                            winreg.SetValueEx(app_key, "Value", 0, winreg.REG_SZ, "Allow")
-                        i += 1
-                    except OSError:
-                        break
-            log_action("Webcam access ALLOWED via registry")
-            messagebox.showinfo("Camera Access", "Webcam access has been allowed for all apps.")
+            try:
+                webcam_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+            except FileNotFoundError:
+                webcam_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+
+            winreg.SetValueEx(webcam_key, "Value", 0, winreg.REG_SZ, "Allow")
+            winreg.CloseKey(webcam_key)
+
+            # Confirm the change
+            webcam_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+            value, _ = winreg.QueryValueEx(webcam_key, "Value")
+            winreg.CloseKey(webcam_key)
+
+            if value == "Allow":
+                log_action("Webcam access ALLOWED via registry")
+                messagebox.showinfo("Camera Access", "Webcam access has been allowed.")
+            else:
+                messagebox.showwarning("Camera Access", "Failed to confirm registry change.")
+
         except PermissionError:
             messagebox.showerror("Permission Error", "Run this script as Administrator to modify registry.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update registry.\n{e}")
-
 class ToggleSwitch(tk.Canvas):
     def __init__(self, parent, command, **kwargs):
         super().__init__(parent, width=60, height=30, bg=parent['bg'], highlightthickness=0, **kwargs)
@@ -227,29 +244,27 @@ class ToggleSwitch(tk.Canvas):
 
 def get_webcam_status():
     try:
-        result = subprocess.check_output(
-            'wmic path Win32_PnPEntity where "Name like \'%Camera%\'" get Status',
-            shell=True
-        ).decode()
-        status_lines = [line.strip() for line in result.splitlines() if line.strip()]
-        status = status_lines[-1] if len(status_lines) > 1 else "Unknown"
-        return status
-    except:
-        return "Error"
+        key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam"
+        webcam_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+        value, _ = winreg.QueryValueEx(webcam_key, "Value")
+        winreg.CloseKey(webcam_key)
+
+        if value == "Deny":
+            return "Disabled"
+        elif value == "Allow":
+            return "Enabled"
+        else:
+            return "Unknown"
+    except FileNotFoundError:
+        return "Unknown"
+    except Exception as e:
+        return f"Error: {e}"
 
 
 def update_status_label():
     status = get_webcam_status()
-    color = {
-        "OK": "green",
-        "Degraded": "orange",
-        "Unknown": "gray",
-        "Error": "red"
-    }.get(status, "gray")
-
-    status_label.config(text=f"Webcam Status: {status}", fg=color)
-    root.after(5000, update_status_label)  # Update every 5 seconds
-
+    status_label.config(text=f"Webcam Status: {status}", fg="green" if status == "Enabled" else "red")
+    root.after(5000, update_status_label)  # Refresh every 5 seconds
 
 
 
