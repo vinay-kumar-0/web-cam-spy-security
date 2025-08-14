@@ -8,8 +8,10 @@ opencv-python-- pip install opencv-python
 pillow-- pip install pillow
 <img width="536" height="84" alt="Screenshot 2025-08-14 130118" src="https://github.com/user-attachments/assets/f5cf2be8-706c-4f87-a6c9-de6588d4ec66" />
 
-#clone the project
+#you can either clone the project or directly download by cliking on code>download zip
 <img width="860" height="57" alt="Screenshot 2025-08-14 132300" src="https://github.com/user-attachments/assets/ade94b88-cb5f-4ce2-9879-6d1156f76625" />
+<img width="647" height="493" alt="Screenshot 2025-08-14 134718" src="https://github.com/user-attachments/assets/0782762e-6bd6-47b3-a1d6-1316cfeb7b33" />
+
 
 #navigate to dist folder -- exe file will be in dist folder
 <img width="749" height="426" alt="Screenshot 2025-08-14 132132" src="https://github.com/user-attachments/assets/e690c107-4a58-4e2c-a840-b88bc5dd9850" />
