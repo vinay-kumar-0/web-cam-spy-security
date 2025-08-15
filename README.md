@@ -1,5 +1,7 @@
 # wed-cam-spy-security
 default password : admin
+# note
+#after cloning or downloading the project, open interface.py file and add your email and app password in send_mail function in order to enable smtp services.
 # how to run the project
 #core dependencies to install 
 opencv-python-- pip install opencv-python
