@@ -15,8 +15,8 @@ root = tk.Tk()
 #fn def to send mails
 
 def send_email(receiver_email, logs):
-    sender_email = "trytobebest5@gmail.com"
-    sender_password = "evfn envt dfys nkxw"
+    sender_email = " " # add your email here
+    sender_password = " " #add your app password here
     smtp_server = "smtp.gmail.com"
     smtp_port = 465
 
